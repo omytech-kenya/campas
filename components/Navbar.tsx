@@ -234,17 +234,6 @@ export default function Navbar() {
             : "opacity-0 translate-x-full pointer-events-none"
         }`}
       >
-        {/* Close button inside mobile menu for better UX */}
-        <div className="flex justify-end mb-4">
-          <button
-            onClick={() => setMobileMenuOpen(false)}
-            className="p-2 text-foreground hover:text-primary hover:bg-surface transition-colors duration-200 rounded-lg"
-            aria-label="Close menu"
-          >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
-
         <div className="flex flex-col gap-6 pb-10">
           {navItems.map((category) => (
             <div
