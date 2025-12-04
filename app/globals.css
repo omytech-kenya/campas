@@ -5,7 +5,7 @@
    =================================== */
 
 @theme {
-  --font-sans: "Inter", sans-serif;
+  --font-sans: var(--font-josefin-sans), "Josefin Sans", sans-serif;
 
   /* Sharp Borders - No Rounded Corners by Default */
   --radius-lg: 0;
@@ -256,6 +256,27 @@
   }
 }
 
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes fade-up-smooth {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Animation utility classes */
 .fade-in {
   animation: fade-in 0.6s ease-out forwards;
@@ -271,6 +292,22 @@
 
 .glass-blur {
   animation: glass-blur 0.3s ease-out forwards;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-fade-up {
+  animation: fade-up-smooth 0.8s ease-out forwards;
+}
+
+.delay-200 {
+  animation-delay: 0.2s;
+}
+
+.delay-400 {
+  animation-delay: 0.4s;
 }
 
 /* ===================================
@@ -363,4 +400,14 @@
 .focus-ring:focus-visible {
   outline: 2px solid hsl(var(--primary));
   outline-offset: 2px;
+}
+
+/* Hide scrollbar for mobile navigation */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }

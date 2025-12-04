@@ -121,15 +121,55 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
+  const [isVisible, setIsVisible] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
 
-  // Scroll Effect
+  // Advanced Scroll Effect (Mobile Only)
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
+      const currentScrollY = window.scrollY;
+
+      // Basic scroll detection for styling
+      setIsScrolled(currentScrollY > 10);
+
+      // Navbar visibility logic (Mobile Only)
+      if (window.innerWidth < 1024) {
+        // Only apply to mobile (lg breakpoint)
+        const scrollDifference = Math.abs(currentScrollY - lastScrollY);
+
+        if (scrollDifference > 3) {
+          // Respond to any meaningful scroll movement
+          if (currentScrollY < lastScrollY && currentScrollY > 10) {
+            // Show navbar when scrolling up (except at very top)
+            setIsVisible(true);
+          } else if (currentScrollY > lastScrollY) {
+            // Hide navbar when scrolling down
+            setIsVisible(false);
+          }
+        }
+
+        // Hide when at the very top
+        if (currentScrollY <= 10) {
+          setIsVisible(false);
+        }
+      } else {
+        // Always show on desktop
+        setIsVisible(true);
+      }
+
+      setLastScrollY(currentScrollY);
     };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+
+    // Initial check
+    handleScroll();
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+    };
+  }, [lastScrollY]);
 
   // Toggle Mobile Dropdown
   const toggleMobileDropdown = (label: string) => {
@@ -137,158 +177,188 @@ export default function Navbar() {
   };
 
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled ? "glass-bg shadow-xl border-b glass-border" : "glass-bg"
-      }`}
-    >
-      <div className="container mx-auto px-6 h-16 flex items-center justify-between">
-        {/* Logo */}
-        <Link
-          href="/"
-          className="text-2xl font-bold tracking-tight text-primary hover:text-accent transition-colors duration-200"
-        >
-          CAMPAS
-        </Link>
-
-        {/* Desktop Navigation */}
-        <nav className="hidden lg:flex items-center gap-2 h-full">
-          {navItems.map((category) => (
-            <div
-              key={category.label}
-              className="relative h-full flex items-center group"
-              onMouseEnter={() => setActiveDropdown(category.label)}
-              onMouseLeave={() => setActiveDropdown(null)}
-            >
-              <button
-                className={`px-4 py-2 text-sm font-semibold transition-all duration-200 flex items-center gap-1 hover:bg-surface ${
-                  activeDropdown === category.label
-                    ? "text-primary bg-surface"
-                    : "text-foreground hover:text-primary"
-                }`}
-              >
-                {category.label}
-                <ChevronDown
-                  className={`w-4 h-4 transition-transform duration-200 ${
-                    activeDropdown === category.label ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
-
-              {/* Modern Dropdown Menu with Glass Effect */}
-              <div
-                className={`absolute top-full left-0 mt-2 w-72 dropdown-modern transition-all duration-300 origin-top-left ${
-                  activeDropdown === category.label
-                    ? "opacity-100 scale-100 visible translate-y-0"
-                    : "opacity-0 scale-95 invisible -translate-y-2"
-                }`}
-              >
-                <div className="p-3 grid gap-1">
-                  {category.items.map((item) => (
-                    <Link
-                      key={item.label}
-                      href={item.href}
-                      className="flex items-center gap-4 px-4 py-3 text-sm font-medium text-foreground hover:text-primary hover:bg-muted/10 transition-all duration-200 group/item"
-                    >
-                      <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-primary to-accent flex items-center justify-center group-hover/item:scale-110 transition-transform duration-200">
-                        <item.icon className="w-4 h-4 text-white" />
-                      </div>
-                      <span className="flex-1">{item.label}</span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ))}
-        </nav>
-
-        {/* CTA Button */}
-        <div className="hidden lg:flex items-center">
-          <Link
-            href="/join"
-            className="btn-primary px-6 py-2.5 text-sm font-semibold shadow-lg hover:shadow-xl"
-          >
-            Join the Community
-          </Link>
-        </div>
-
-        {/* Mobile Menu Button */}
-        <button
-          className="lg:hidden p-2 text-foreground hover:text-primary hover:bg-surface transition-colors duration-200 relative z-50"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label="Toggle menu"
-        >
-          {mobileMenuOpen ? (
-            <X className="w-6 h-6" />
-          ) : (
-            <Menu className="w-6 h-6" />
-          )}
-        </button>
-      </div>
-
-      {/* Mobile Menu Overlay */}
-      <div
-        className={`fixed inset-0 z-40 glass-bg transition-all duration-300 lg:hidden flex flex-col pt-20 px-6 overflow-y-auto ${
-          mobileMenuOpen
-            ? "opacity-100 translate-x-0"
-            : "opacity-0 translate-x-full pointer-events-none"
+    <>
+      {/* Desktop Navigation - Always Sticky */}
+      <header
+        className={`hidden lg:block fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          isScrolled ? "glass-bg shadow-xl border-b glass-border" : "glass-bg"
         }`}
       >
-        <div className="flex flex-col gap-6 pb-10">
-          {navItems.map((category) => (
-            <div
-              key={category.label}
-              className="border-b border-border pb-4 last:border-0"
-            >
-              <button
-                onClick={() => toggleMobileDropdown(category.label)}
-                className="flex items-center justify-between w-full text-lg font-bold text-foreground py-3 hover:text-primary transition-colors duration-200"
-              >
-                {category.label}
-                <ChevronDown
-                  className={`w-5 h-5 transition-transform duration-300 ${
-                    mobileExpanded === category.label ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
+        <div className="container mx-auto px-6 h-16 flex items-center justify-between">
+          {/* Logo */}
+          <Link
+            href="/"
+            className="text-2xl font-bold tracking-tight text-primary hover:text-accent transition-colors duration-200"
+          >
+            CAMPAS
+          </Link>
 
+          {/* Desktop Navigation */}
+          <nav className="flex items-center gap-2 h-full">
+            {navItems.map((category) => (
               <div
-                className={`grid transition-all duration-300 ease-in-out overflow-hidden ${
-                  mobileExpanded === category.label
-                    ? "grid-rows-[1fr] opacity-100 mt-3"
-                    : "grid-rows-[0fr] opacity-0"
-                }`}
+                key={category.label}
+                className="relative h-full flex items-center group"
+                onMouseEnter={() => setActiveDropdown(category.label)}
+                onMouseLeave={() => setActiveDropdown(null)}
               >
-                <div className="min-h-0 flex flex-col gap-2">
-                  {category.items.map((item) => (
-                    <Link
-                      key={item.label}
-                      href={item.href}
-                      className="flex items-center gap-4 px-4 py-3 text-sm font-medium text-foreground hover:text-primary hover:bg-muted/10 transition-all duration-200"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <div className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                        <item.icon className="w-3.5 h-3.5 text-white" />
-                      </div>
-                      {item.label}
-                    </Link>
-                  ))}
+                <button
+                  className={`px-4 py-2 text-sm font-semibold transition-all duration-200 flex items-center gap-1 hover:bg-surface ${
+                    activeDropdown === category.label
+                      ? "text-primary bg-surface"
+                      : "text-foreground hover:text-primary"
+                  }`}
+                >
+                  {category.label}
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform duration-200 ${
+                      activeDropdown === category.label ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+
+                {/* Modern Dropdown Menu with Glass Effect */}
+                <div
+                  className={`absolute top-full left-0 mt-2 w-72 dropdown-modern transition-all duration-300 origin-top-left ${
+                    activeDropdown === category.label
+                      ? "opacity-100 scale-100 visible translate-y-0"
+                      : "opacity-0 scale-95 invisible -translate-y-2"
+                  }`}
+                >
+                  <div className="p-3 grid gap-1">
+                    {category.items.map((item) => (
+                      <Link
+                        key={item.label}
+                        href={item.href}
+                        className="flex items-center gap-4 px-4 py-3 text-sm font-medium text-foreground hover:text-primary hover:bg-muted/10 transition-all duration-200 group/item"
+                      >
+                        <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-primary to-accent flex items-center justify-center group-hover/item:scale-110 transition-transform duration-200">
+                          <item.icon className="w-4 h-4 text-white" />
+                        </div>
+                        <span className="flex-1">{item.label}</span>
+                      </Link>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </nav>
 
-          <div className="pt-4">
+          {/* CTA Button */}
+          <div className="flex items-center">
             <Link
               href="/join"
-              className="btn-primary block w-full text-center py-4 font-semibold shadow-lg"
-              onClick={() => setMobileMenuOpen(false)}
+              className="btn-primary px-6 py-2.5 text-sm font-semibold shadow-lg hover:shadow-xl"
             >
               Join the Community
             </Link>
           </div>
         </div>
+      </header>
+
+      {/* Mobile Navigation - Special Layout with Scroll Behavior */}
+      <div
+        className={`lg:hidden fixed top-0 left-0 right-0 z-50 bg-surface border-b-4 border-b-primary transition-all duration-500 ease-in-out ${
+          isVisible
+            ? "translate-y-0 opacity-100"
+            : "-translate-y-full opacity-0 pointer-events-none"
+        }`}
+      >
+        {/* Mobile Logo Section */}
+        <div className="bg-surface border-b border-border">
+          <div className="container mx-auto px-6 py-4 text-center">
+            <Link
+              href="/"
+              className="text-3xl font-bold tracking-tight text-primary hover:text-accent transition-colors duration-200"
+            >
+              CAMPAS
+            </Link>
+          </div>
+        </div>
+
+        {/* Mobile Scrollable Navigation */}
+        <div className="bg-surface">
+          <div className="container mx-auto px-4 py-3">
+            <div className="flex gap-1 overflow-x-auto scrollbar-hide">
+              {navItems.map((category) => (
+                <div key={category.label} className="relative group">
+                  <button
+                    onClick={() =>
+                      setActiveDropdown(
+                        activeDropdown === category.label
+                          ? null
+                          : category.label
+                      )
+                    }
+                    className={`px-3 py-2 text-xs font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-1 ${
+                      activeDropdown === category.label
+                        ? "text-primary bg-surface"
+                        : "text-foreground hover:text-primary hover:bg-surface/50"
+                    }`}
+                  >
+                    {category.label}
+                    <ChevronDown
+                      className={`w-3 h-3 transition-transform duration-200 ${
+                        activeDropdown === category.label ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile CTA */}
+        <div className="bg-surface border-t border-border">
+          <div className="container mx-auto px-6 py-3">
+            <Link
+              href="/join"
+              className="btn-primary block w-full text-center py-3 text-sm font-semibold"
+            >
+              Join the Community
+            </Link>
+          </div>
+        </div>
+
+        {/* Mobile Dropdown Modal */}
+        {activeDropdown && (
+          <div className="absolute top-full left-0 right-0 bg-background border-t border-border shadow-2xl z-40">
+            <div className="container mx-auto px-6 py-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-primary">
+                  {activeDropdown}
+                </h3>
+                <button
+                  onClick={() => setActiveDropdown(null)}
+                  className="p-1 text-foreground hover:text-primary transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="grid gap-2">
+                {navItems
+                  .find((item) => item.label === activeDropdown)
+                  ?.items.map((item) => (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground hover:text-primary hover:bg-surface transition-all duration-200 rounded-lg"
+                      onClick={() => setActiveDropdown(null)}
+                    >
+                      <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-primary to-accent flex items-center justify-center rounded-lg">
+                        <item.icon className="w-4 h-4 text-white" />
+                      </div>
+                      <div>
+                        <div className="font-medium">{item.label}</div>
+                      </div>
+                    </Link>
+                  ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-    </header>
+    </>
   );
 }
